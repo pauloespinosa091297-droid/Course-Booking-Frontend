@@ -100,55 +100,50 @@
 		}
 	})
 
-	// this will be our temporary function for mimicking the registration
+	
 	async function handleSubmit(e) {
-		e.preventDefault();
+    e.preventDefault();
 
-		/*console.log(email.value);
-		console.log(password.value);
-		console.log(confirmPass.value);*/
+    try {
+        
+        let emailCheck = await api.post('/users/check-email', {
+            email: email.value
+        });
 
-		try {
+       
+        if (emailCheck.status === 200) {
+            let response = await api.post('/users/register', {
+                firstName: firstName.value,
+                lastName: lastName.value,
+                email: email.value,
+                mobileNo: mobileNo.value,
+                password: password.value
+            });
 
-			await api.post('/users/check-email', {
-				email: email.value
-			});
+            if (response.status === 201) {
+                notyf.success("Registration Successful");
 
-			let response = await api.post('/users/register', {
-				firstName: firstName.value,
-				lastName: lastName.value,
-				email: email.value,
-				mobileNo: mobileNo.value,
-				password: password.value
-			})
+                // clear values after submission
+                firstName.value = "";
+                lastName.value = "";
+                mobileNo.value = "";
+                email.value = "";
+                password.value = "";
+                confirmPass.value = "";
 
-			if(response.status === 201) {
-				notyf.success("Registration Successful");
+                router.push({ path: '/login' });
+            }
+        }
 
-						// clear values after submission
-				 		firstName.value = "";
-				 		lastName.value = "";
-				 		mobileNo.value = "";
-						email.value = "";
-						password.value = "";
-						confirmPass.value = "";
-
-				router.push({ path: '/login' });
-			}
-
-			// if the email already exist int he databasedm the response will be sent and saved in the "err"
-			// if the registration response throws 44xx or 5xx status codem the response will be sent and save in "err"
-		} catch(err) {
-
-		if(err.response.status === 404 || err.response.status === 401 || err.response.status === 400 || err.response.status === 409){
-			notyf.error(err.response.data.message);
-		} else {
-			console.log(err);
-			notyf.error("Registration Failed. Please contact administrator.")
-		}
- 
- 	}
-		
+    } catch (err) {
+        // Axios jumps here if check-email returns 409, or if register returns 400/409/500
+        if (err.response && [400, 401, 404, 409].includes(err.response.status)) {
+            notyf.error(err.response.data.message);
+        } else {
+            console.error(err);
+            notyf.error("Registration Failed. Please contact administrator.");
+        }
+    }
 }
 	
 	
